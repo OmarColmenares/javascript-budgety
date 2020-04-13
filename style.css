@@ -155,7 +155,7 @@ body {
 .add__value { width: 100px;}
 
 .add__btn,
-.edit__btn {
+.print__btn {
     font-size: 35px;
     background: none;
     border: none;
@@ -163,20 +163,21 @@ body {
     cursor: pointer;
     vertical-align: middle;
     line-height: 1.1;
+    display: inline-block;
+}
+
+.add__btn{
     margin-left: 10px;
 }
-.add__btn{
-    display: inline-block;
-}
-.edit__btn{
-    display: inline-block;
+
+.print__btn{
+    margin-left: 300px;
 }
 
 .add__btn:active { transform: translateY(2px); }
-.edit__btn:active { transform: translateY(2px); }
+.print__btn:active { transform: translateY(2px); }
 
 .add__type:focus,
-.edit__type:focus,
 .add__description:focus,
 .add__value:focus {
     outline: none;
