@@ -70,6 +70,13 @@ const budgetContoller = (() => {
 
             if(index !== -1) data.allItems[type].splice(index, 1);
         },
+        editItem:(type, id) => {
+            let ids, index, item;
+            ids = data.allItems[type].map(cur =>  cur.id);
+            index =  ids.indexOf(id);
+            item = data.allItems[type][index]
+            return item;
+        },
         testing: () => {
             console.log(data);
         },
@@ -120,6 +127,7 @@ const UIController = (() => {
         inputDescription:'.add__description',
         inputValue:'.add__value',
         inputBtn:'.add__btn',
+        editBtn: '.edit__btn',
         printBtn: '.print__btn',
         incomeContainer:'.income__list',
         expensesContainer:'.expenses__list',
@@ -131,6 +139,7 @@ const UIController = (() => {
         container: '.container',
         expensesListLabel: '.item__percentage',
         monthLabel: '.budget__title--month'
+
     };
     const formatNumber = (num, type) => {
         let numSplit, int, dec;
@@ -165,6 +174,7 @@ const UIController = (() => {
                     <div class="right clearfix">
                         <div class="item__value">%value%</div>
                         <div class="item__delete">
+                            <button class="item__edit--btn"><ion-icon name="create-outline"></ion-icon></button>
                             <button class="item__delete--btn"><ion-icon name="close-circle-outline"></ion-icon></button>
                         </div>
                     </div>
@@ -178,6 +188,7 @@ const UIController = (() => {
                         <div class="item__value">%value%</div>
                         <div class="item__percentage">21%</div>
                         <div class="item__delete">
+                            <button class="item__edit--btn"><ion-icon name="create-outline"></ion-icon></button>
                             <button class="item__delete--btn"><ion-icon name="close-circle-outline"></ion-icon></button>
                         </div>
                     </div>
@@ -232,6 +243,19 @@ const UIController = (() => {
             nodeListForEach(fields, cur => cur.classList.toggle('red-focus'));
 
             document.querySelector(DOMStrings.inputBtn).classList.toggle('red');
+            document.querySelector(DOMStrings.editBtn).classList.toggle('red');
+
+        },
+        editItem: (data, type,itemID, callback) => {
+            const option = document.querySelector(`.add__type option`).hasAttribute('selected');
+            document.querySelector(DOMStrings.inputDescription).value = data.description;
+            document.querySelector(DOMStrings.inputValue).value = data.value;
+            document.querySelector('.id__container').value = itemID
+            document.querySelector(`.add__type option[selected]`).removeAttribute('selected');
+            document.querySelector(`.add__type option[value=${type}]`).setAttribute('selected', '');
+
+            if(option === true && type === 'exp') callback();
+            if(option === false && type === 'inc') callback();
         },
         displayMonth: () => {
             let now, month, year, months
@@ -263,11 +287,15 @@ const controller = ((budgetCtrl, UICtrl) => {
         let DOM;
         DOM = UICtrl.getDOMString();
         document.querySelector(DOM.inputBtn).addEventListener('click', ctrlAddItem);
-
+        document.querySelector(DOM.editBtn).addEventListener('click', ctrlEditItem);
+        document.querySelector('.cancel__edit').addEventListener('click', ctrlCancelEdit);
         document.addEventListener('keyup', e => {
             if(e.keyCode === 13 || e.which === 13) ctrlAddItem()
         });
-        document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
+        document.querySelector(DOM.container).addEventListener('click', e => {
+            if(e.target.matches('.item__delete--btn, .item__delete--btn *')) ctrlDeleteItem(e)
+            if(e.target.matches('.item__edit--btn, .item__edit--btn *'))ctrlStylesEditItem(e)
+        });
         document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
 
         window.addEventListener('load', () => {
@@ -310,9 +338,10 @@ const controller = ((budgetCtrl, UICtrl) => {
          updateBudget();
          // 6. Calculate and update percentages
          updatePercentages();
+         //set storage
+        budgetCtrl.persistData();
         } 
-        //set storage
-        budgetCtrl.persistData()
+        
     };
     const ctrlDeleteItem = e => {
         let itemID, splitID, type, ID;
@@ -333,9 +362,54 @@ const controller = ((budgetCtrl, UICtrl) => {
             budgetCtrl.persistData()
         };
     };
+    const ctrlStylesEditItem = e => {
+        let itemID, splitID, type, ID;
+        itemID = e.target.parentNode.parentNode.parentNode.parentNode.id;
+        if (itemID) {
+            splitID = itemID.split('-');
+            type = splitID[0];
+            ID = parseInt( splitID[1] );
+            // 1. Get data from the input
+           const data = budgetCtrl.editItem(type, ID);
+           // 2. Set values to inputs
+           UICtrl.editItem(data, type, itemID, UICtrl.changedType);
+           // 3 Show edit button
+           document.querySelector('.edit__btn').style.display = 'inline-block';
+           document.querySelector('.cancel__edit').style.display = 'inline-block';
+           document.querySelector('.add__btn').style.display = 'none';
+        };
+    };
+    const ctrlEditItem = () => {
+        let  itemID,  splitID, type,  ID;
+        itemID = document.querySelector('.id__container').value;
+        splitID = itemID.split('-');
+        type = splitID[0];
+        ID = parseInt( splitID[1] );
+        console.log(itemID);
+       // 1. Delete the item from the data structure
+       budgetCtrl.deleteItem(type, ID);
+       // 2. Delete the item from the UICtrl
+       UICtrl.deleteListItem(itemID);
+       ctrlAddItem ();
+       document.querySelector('.edit__btn').style.display = 'none';
+       document.querySelector('.cancel__edit').style.display = 'none';
+       document.querySelector('.add__btn').style.display = 'inline-block';
+    };
+    const ctrlCancelEdit = () => {
+         // 1 Clear the input fields
+        UICtrl.clearFields();
+        document.querySelector('.edit__btn').style.display = 'none';
+        document.querySelector('.cancel__edit').style.display = 'none';
+        document.querySelector('.add__btn').style.display = 'inline-block';
+        const option = document.querySelector(`.add__type option[value='exp']`).hasAttribute('selected');
+        if(option) {
+            UICtrl.changedType();
+            document.querySelector(`.add__type option[value='inc']`).setAttribute('selected', '');
+        }
+    };
     const ctrlStorage = type => {
          //get data
-         const allItems = budgetCtrl.readStorage()
+         const allItems = budgetCtrl.readStorage();
          //loop data
         allItems[type].forEach(item => {
             // 3. Add the item to the UI
