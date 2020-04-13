@@ -15,11 +15,7 @@ const budgetContoller = (() => {
 
         getPercentages() {
             return this.percentage;
-        }
-        /*
-        persistData() {
-            localStorage.setItem('exp', JSON.stringify(data.allItems.exp));
-        }*/
+        };
     };
 
     class Income{
@@ -28,10 +24,6 @@ const budgetContoller = (() => {
             this.description = description;
             this.value = value;
         };
-        /*
-        persistData() {
-            localStorage.setItem('inc', JSON.stringify(data.allItems.inc));
-        }*/
     };
 
     const calculateTotal = type => {
@@ -128,8 +120,10 @@ const UIController = (() => {
         inputDescription:'.add__description',
         inputValue:'.add__value',
         inputBtn:'.add__btn',
+        printBtn: '.print__btn',
         incomeContainer:'.income__list',
         expensesContainer:'.expenses__list',
+        addContainer: '.add__container',
         budgetLabel: '.budget__value',
         incomeLabel: '.budget__income--value',
         expensesLabel: '.budget__expenses--value',
@@ -254,6 +248,12 @@ const UIController = (() => {
                 value: parseFloat(document.querySelector(DOMStrings.inputValue).value),
             };
         },
+        printBudgety: () => {
+            const addContainer = document.querySelector(DOMStrings.addContainer);
+            addContainer.style.display = 'none';
+            window.print();
+            addContainer.style.display = 'block';
+        },
     };
 })();
 //GLOBAL APP CONTROLLER
@@ -274,6 +274,8 @@ const controller = ((budgetCtrl, UICtrl) => {
             ctrlStorage('inc');
             ctrlStorage('exp');
         });
+
+        document.querySelector(DOM.printBtn).addEventListener('click', UICtrl.printBudgety);
     };
     const updateBudget = () => {
         let budget;
@@ -335,16 +337,16 @@ const controller = ((budgetCtrl, UICtrl) => {
          //get data
          const allItems = budgetCtrl.readStorage()
          //loop data
-         allItems[type].forEach(item => {
-         // 3. Add the item to the UI
-         let newItem = budgetCtrl.addItem(type,item.description,item.value);
-         UICtrl.addListItem(newItem, type);
-         // 5. Calculate and update budget
-         updateBudget();
-         // 6. Calculate and update percentages
-         updatePercentages();
-         })
-    }
+        allItems[type].forEach(item => {
+            // 3. Add the item to the UI
+            let newItem = budgetCtrl.addItem(type,item.description,item.value);
+            UICtrl.addListItem(newItem, type);
+            // 5. Calculate and update budget
+            updateBudget();
+            // 6. Calculate and update percentages
+            updatePercentages();
+        });
+    };
     return {
         init: () => {
             setupEventListeners(),
