@@ -76,9 +76,6 @@ const budgetContoller = (() => {
       item = data.allItems[type][index];
       return item;
     },
-    testing: () => {
-      console.log(data);
-    },
     calculateBudget: () => {
       // Calculate total income and expenses
       calculateTotal('inc');
@@ -425,15 +422,17 @@ const controller = ((budgetCtrl, UICtrl) => {
     // Get data
     const allItems = budgetCtrl.readStorage();
     // Create items
-    allItems[type].forEach((item) => {
-      // Add the item to the UI
-      let newItem = budgetCtrl.addItem(type, item.description, item.value);
-      UICtrl.addListItem(newItem, type);
-      // Calculate and update budget
-      updateBudget();
-      // Calculate and update percentages
-      updatePercentages();
-    });
+    if(allItems[type].length > 0){
+        allItems[type].forEach((item) => {
+        // Add the item to the UI
+        let newItem = budgetCtrl.addItem(type, item.description, item.value);
+        UICtrl.addListItem(newItem, type);
+        // Calculate and update budget
+        updateBudget();
+        // Calculate and update percentages
+        updatePercentages();
+      });
+    };
   };
   return {
     init: () => {
